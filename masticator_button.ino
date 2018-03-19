@@ -1,12 +1,11 @@
 #include <elapsedMillis.h>
-#include <Adafruit_DotStar.h>
+#include <Adafruit_NeoPixel.h>
 #include <SPI.h> 
 #include <Bounce2.h>
 
 
 #define NUMPIXELS 30 // Number of LEDs in strip
 #define DATAPIN    11
-#define CLOCKPIN   13
 #define MASTODON 5
 #define MAMMOTH 6
 #define SENSOR  A2
@@ -14,8 +13,8 @@
 #define PULSEMAX 500
 #define SESSION 30000
 
-Adafruit_DotStar strip = Adafruit_DotStar(
-  NUMPIXELS, DATAPIN, CLOCKPIN, DOTSTAR_BRG);
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(
+  NUMPIXELS, DATAPIN, NEO_GRB + NEO_KHZ800);
 
 Bounce debouncer = Bounce();
 elapsedMillis pulse = 0;
