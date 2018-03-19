@@ -1,5 +1,6 @@
+#include <Adafruit_NeoPixel.h>
+
 #include <elapsedMillis.h>
-#include <Adafruit_DotStar.h>
 #include <SPI.h> 
 #include <Bounce2.h>
 
@@ -303,23 +304,22 @@ class NeoPatterns : public Adafruit_NeoPixel
     }
 };
  
-void Ring1Complete();
- 
-// Define some NeoPatterns for the two rings and the stick
-//  as well as some completion routines
+void Ring1Complete(); 
+
 NeoPatterns Ring1(NUMPIXELS, DATAPIN, NEO_GRB + NEO_KHZ800, &Ring1Complete);
 
 Bounce debouncer = Bounce();
 elapsedMillis pulse = 0;
 elapsedMillis session = SESSION;
+elapsedMillis scanningPause = 0;
 
 bool busy = false;
 int outState = LOW;
+bool paused = true;
 
 void setup() {
-  // put your setup code here, to run once:
-  strip.begin(); // Initialize pins for output
-  strip.show();  // Turn all LEDs off ASAP
+  
+  Ring1.begin(); // Initialize pins for output
 
   pinMode(SENSOR,INPUT_PULLUP);
   debouncer.attach(SENSOR);
@@ -329,6 +329,10 @@ void setup() {
   digitalWrite(MASTODON,outState);
   pinMode(MAMMOTH,OUTPUT);
   digitalWrite(MAMMOTH,outState);
+
+  Ring1.Fade(Ring1.Color(20,100,0), Ring1.Color(10,50,0), 50, 20);
+  Ring1.Scanner(Ring1.Color(0,128,0), 33);
+  Ring1.ActivePattern = FADE;
   
 }
 
@@ -340,6 +344,7 @@ uint32_t color = 0xFF0000;      // 'On' color (starts red)
 
 void loop() {
   debouncer.update();
+  Ring1.Update();
   if(!busy){
     if(debouncer.fell()){
       outState = HIGH;
@@ -348,6 +353,7 @@ void loop() {
       pulse = 0;
       session = 0;
       busy = true;
+      Ring1.ActivePattern = SCANNER;
     }
   }
   else{
@@ -358,20 +364,21 @@ void loop() {
     }
     if (session > SESSION){
       busy = false;
+      Ring1.ActivePattern = FADE;
     }
-  strip.setPixelColor(head, color); // 'On' pixel at head
-  strip.setPixelColor(tail, 0);     // 'Off' pixel at tail
-  strip.show();                     // Refresh strip
-  delay(20);                        // Pause 20 milliseconds (~50 FPS)
-
-  if(++head >= NUMPIXELS) {         // Increment head index.  Off end of strip?
-    head = 0;                       //  Yes, reset head index to start
-    if((color >>= 8) == 0)          //  Next color (R->G->B) ... past blue now?
-      color = 0xFF0000;             //   Yes, reset to red
+    if (scanningPause > 300){
+      Ring1.ActivePattern = SCANNER;
+    }
   }
-  if(++tail >= NUMPIXELS) tail = 0; // Increment, reset tail index
 }
-  
-  }
-  
 
+
+void Ring1Complete(){
+  if(Ring1.ActivePattern==FADE){
+    Ring1.Reverse();
+  }
+  else{
+    Ring1.ActivePattern = NONE;
+    scanningPause = 0;
+  }
+}
